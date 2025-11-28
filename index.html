@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Flexus 云资源实时监控中心</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0b0c15; color: #00f2ff; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00f2ff; padding-bottom: 10px; }
+        h1 { margin: 0; text-shadow: 0 0 10px #00f2ff; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: rgba(255, 255, 255, 0.05); border: 1px solid #333; border-radius: 10px; padding: 20px; box-shadow: 0 0 20px rgba(0, 242, 255, 0.1); }
+        .metric-value { font-size: 3em; font-weight: bold; text-align: center; margin: 10px 0; }
+        .metric-label { text-align: center; color: #888; }
+        canvas { max-height: 200px; }
+        .status-dot { display: inline-block; width: 10px; height: 10px; background-color: #0f0; border-radius: 50%; box-shadow: 0 0 5px #0f0; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <div class="header">
+            <h1><span class="status-dot"></span>Flexus L实例 - 实时监控大屏</h1>
+            <p>Node.js Backend + Vue.js Frontend</p>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <div class="metric-label">CPU 使用率</div>
+                <div class="metric-value" :style="{ color: cpuColor }">{{ stats.cpu }}%</div>
+                <canvas id="cpuChart"></canvas>
+            </div>
+
+            <div class="card">
+                <div class="metric-label">内存 使用率</div>
+                <div class="metric-value" :style="{ color: memColor }">{{ stats.memUsage }}%</div>
+                <canvas id="memChart"></canvas>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 30px; color: #555;">数据更新频率: 2000ms | Powered by Huawei Cloud</p>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const stats = ref({ cpu: 0, memUsage: 0 });
+                const cpuColor = ref('#00f2ff');
+                const memColor = ref('#00f2ff');
+                let cpuChart, memChart;
+
+                const initCharts = () => {
+                    const commonOptions = {
+                        responsive: true,
+                        animation: false,
+                        scales: { x: { display: false }, y: { beginAtZero: true, max: 100, grid: { color: '#333' } } },
+                        plugins: { legend: { display: false } },
+                        elements: { line: { tension: 0.4, borderColor: '#00f2ff', borderWidth: 2 }, point: { radius: 0 } }
+                    };
+
+                    cpuChart = new Chart(document.getElementById('cpuChart'), {
+                        type: 'line', data: { labels: Array(20).fill(''), datasets: [{ data: Array(20).fill(0), borderColor: '#00f2ff', backgroundColor: 'rgba(0, 242, 255, 0.1)', fill: true }] },
+                        options: commonOptions
+                    });
+
+                    memChart = new Chart(document.getElementById('memChart'), {
+                        type: 'line', data: { labels: Array(20).fill(''), datasets: [{ data: Array(20).fill(0), borderColor: '#ff00ff', backgroundColor: 'rgba(255, 0, 255, 0.1)', fill: true }] },
+                        options: { ...commonOptions, elements: { ...commonOptions.elements, line: { ...commonOptions.elements.line, borderColor: '#ff00ff' } } }
+                    });
+                };
+
+                const updateData = async () => {
+                    try {
+                        const res = await fetch('/api/stats');
+                        const data = await res.json();
+                        stats.value = data;
+
+                        // 更新颜色
+                        cpuColor.value = data.cpu > 80 ? '#ff0000' : '#00f2ff';
+                        memColor.value = data.memUsage > 80 ? '#ff0000' : '#ff00ff';
+
+                        // 更新图表
+                        updateChart(cpuChart, data.cpu);
+                        updateChart(memChart, data.memUsage);
+                    } catch (e) { console.error(e); }
+                };
+
+                const updateChart = (chart, value) => {
+                    const data = chart.data.datasets[0].data;
+                    data.push(value);
+                    data.shift();
+                    chart.update();
+                };
+
+                onMounted(() => {
+                    initCharts();
+                    setInterval(updateData, 2000);
+                });
+
+                return { stats, cpuColor, memColor };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
