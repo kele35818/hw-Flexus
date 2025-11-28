@@ -41,8 +41,8 @@ Markdown
 ### 1. 环境准备
 
 确保你的 Flexus 服务器已安装 Node.js 环境：
+bash
 
-```bash
 apt update
 apt install nodejs npm -y
 2. 克隆与安装
