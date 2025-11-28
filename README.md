@@ -42,32 +42,22 @@ Markdown
 
 确保你的 Flexus 服务器已安装 Node.js 环境：
 bash
-
 apt update
 apt install nodejs npm -y
+
 2. 克隆与安装
 Bash
-
 git clone [你的Git仓库地址]
 cd monitor_app
 npm install
+
 3. 启动监控服务
 Bash
-
 node server.js
-服务默认运行在 8080 端口。 请确保华为云安全组已放行 TCP:8080 端口。
-
-4. 访问大屏
+服务默认运行在 8080 端口。
+请确保华为云安全组已放行 TCP:8080 端口。
+5. 访问大屏
 打开浏览器访问：http://<你的公网IP>:8080
-
-📸 运行截图 (Screenshots)
-(此处展示项目实际运行效果，用于申请材料审核)
-
-1. 监控大屏界面 (Frontend)
-(请替换为你的浏览器截图：展示动态波形图)
-
-2. 后端服务日志 (Backend Terminal)
-(请替换为你的 SSH 终端截图：展示 "监控大屏已启动" 日志)
 
 ☁️ 云架构说明 (Cloud Architecture)
 Flexus 应用服务器: 承载 Node.js 运行时环境，提供计算算力。
